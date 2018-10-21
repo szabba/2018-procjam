@@ -11,6 +11,8 @@ import Html.Attributes as HA
 import Html.Events as HE
 import Json.Decode as Decode exposing (Decoder)
 import Random exposing (Generator)
+import Svg as S exposing (Svg)
+import Svg.Attributes as SA
 
 
 main : Program {} Model Msg
@@ -73,7 +75,7 @@ view { generation, samples, countWanted } =
             []
         , H.button [ HE.onClick RegenerationRequested ]
             [ H.text "REGENERATE" ]
-        , H.ul [] <| List.map (H.li [] << List.singleton << viewSample) <| samples
+        , H.div [] <| List.map (H.div [ HA.style "display" "inline-block" ] << List.singleton << viewSample) <| samples
         ]
     }
 
@@ -87,9 +89,50 @@ changeWantedDecoder =
 
 
 viewSample : Sample -> Html msg
-viewSample { skinTone } =
-    H.span [ HA.style "color" <| skinToneToString skinTone ]
-        [ H.text "skinTone" ]
+viewSample sample =
+    S.svg
+        [ SA.width "150"
+        , SA.height "200"
+        , SA.viewBox "0 0 150 200"
+        , HA.style "border-color" "#000"
+        , HA.style "border-width" "1px"
+        , HA.style "border-style" "solid"
+        ]
+        [ offset ( 75, 100 ) [ viewBody sample ]
+        , offset ( 75, 50 ) [ viewHead sample ]
+        ]
+
+
+offset ( dx, dy ) children =
+    let
+        transform =
+            "translate(" ++ String.fromInt dx ++ ", " ++ String.fromInt dy ++ ")"
+    in
+    S.g [ SA.transform transform ] children
+
+
+viewHead : Sample -> Svg msg
+viewHead { skinTone } =
+    S.circle
+        [ SA.cx "0"
+        , SA.cy "0"
+        , SA.r "30"
+        , SA.fill (skinToneToString skinTone)
+        , SA.strokeWidth "2"
+        , SA.stroke "#000"
+        ]
+        []
+
+
+viewBody : Sample -> Svg msg
+viewBody { skinTone } =
+    S.path
+        [ SA.d "M -20 50 L -10 -10 L 30 -10 L 40 50 L 40 90 L 20 50 L 0 50 L -20 90 Z"
+        , SA.fill (skinToneToString skinTone)
+        , SA.strokeWidth "2"
+        , SA.stroke "#000"
+        ]
+        []
 
 
 type Msg
