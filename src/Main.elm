@@ -35,7 +35,13 @@ type alias Model =
 
 type alias Sample =
     { skinTone : SkinTone
+    , farHandItem : Maybe Item
+    , closeHandItem : Maybe Item
     }
+
+
+type Item
+    = Flower
 
 
 type SkinTone
@@ -133,13 +139,46 @@ viewBody { skinTone } =
 
 
 viewCloseHand : Sample -> Svg msg
-viewCloseHand =
-    viewHand >> List.singleton >> offset ( 120, 140 )
+viewCloseHand sample =
+    offset ( 120, 140 )
+        [ sample.closeHandItem
+            |> Maybe.map (viewItem sample.skinTone)
+            |> Maybe.withDefault (S.text "")
+        , viewHand sample
+        ]
 
 
 viewFarHand : Sample -> Svg msg
-viewFarHand =
-    viewHand >> List.singleton >> offset ( 40, 140 )
+viewFarHand sample =
+    offset ( 40, 140 )
+        [ viewHand sample
+        , sample.farHandItem
+            |> Maybe.map (viewItem sample.skinTone)
+            |> Maybe.withDefault (S.text "")
+        ]
+
+
+viewItem : SkinTone -> Item -> Svg msg
+viewItem skinTone item =
+    case item of
+        Flower ->
+            styled S.g skinTone [] flower
+
+
+flower : List (Svg msg)
+flower =
+    let
+        flowerHead =
+            [ offset ( 7, 0 ) [ S.circle [ SA.r "5" ] [] ]
+            , offset ( 0, 7 ) [ S.circle [ SA.r "5" ] [] ]
+            , offset ( -7, 0 ) [ S.circle [ SA.r "5" ] [] ]
+            , offset ( 0, -7 ) [ S.circle [ SA.r "5" ] [] ]
+            , S.circle [ SA.r "5" ] []
+            ]
+    in
+    [ S.line [ SA.x1 "10", SA.y1 "-15", SA.x2 "-20", SA.y2 "30" ] []
+    , offset ( -20, 30 ) flowerHead
+    ]
 
 
 viewHand : Sample -> Svg msg
@@ -227,8 +266,17 @@ generateSamples { generation, count } =
 
 sampleGenerator : Generator Sample
 sampleGenerator =
-    Random.map Sample
+    Random.map3 Sample
         skinToneGenerator
+        itemGenerator
+        itemGenerator
+
+
+itemGenerator : Generator (Maybe Item)
+itemGenerator =
+    [ Flower ]
+        |> List.map Just
+        |> Random.uniform Nothing
 
 
 skinToneGenerator : Generator SkinTone
