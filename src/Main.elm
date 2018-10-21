@@ -42,6 +42,7 @@ type alias Sample =
 
 type Item
     = Flower
+    | Dagger
     | Rotated Float Item
 
 
@@ -169,6 +170,9 @@ viewItem item =
         Flower ->
             flower
 
+        Dagger ->
+            dagger
+
         Rotated arcFraction nested ->
             let
                 angle =
@@ -176,6 +180,15 @@ viewItem item =
             in
             S.g [ SA.transform <| "rotate(" ++ angle ++ ")" ]
                 [ viewItem nested ]
+
+
+dagger : Svg msg
+dagger =
+    S.g [ SA.transform "rotate(-45)" ]
+        [ S.line [ SA.x1 "2", SA.y1 "0", SA.x2 "-12", SA.y2 "0" ] []
+        , S.line [ SA.x1 "-12", SA.y1 "10", SA.x2 "-12", SA.y2 "-10" ] []
+        , S.path [ SA.d "M -40 0 l 28 -5 l 0 10 Z" ] []
+        ]
 
 
 flower : Svg msg
@@ -277,7 +290,7 @@ rotatedItemGenerator =
 
 itemGenerator : Generator (Maybe Item)
 itemGenerator =
-    [ Flower ]
+    [ Flower, Dagger ]
         |> List.map Just
         |> Random.uniform Nothing
 
