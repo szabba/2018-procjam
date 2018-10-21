@@ -46,10 +46,13 @@ skinToneToString (SkinTone skinTone) =
 init : {} -> ( Model, Cmd Msg )
 init _ =
     ( { generation = 0
-      , requestedGeneration = 0
+      , requestedGeneration = 1
       , samples = []
       }
-    , Cmd.none
+    , generateSamples
+        { generation = 1
+        , count = 10
+        }
     )
 
 
