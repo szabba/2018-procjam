@@ -9,6 +9,7 @@ import Browser
 import Html as H exposing (Html)
 import Html.Attributes as HA
 import Html.Events as HE
+import Json.Decode as Decode exposing (Decoder)
 import Random exposing (Generator)
 
 
@@ -25,6 +26,7 @@ main =
 type alias Model =
     { generation : Int
     , requestedGeneration : Int
+    , countWanted : Int
     , samples : List Sample
     }
 
@@ -47,6 +49,7 @@ init : {} -> ( Model, Cmd Msg )
 init _ =
     ( { generation = 0
       , requestedGeneration = 1
+      , countWanted = 10
       , samples = []
       }
     , generateSamples
@@ -57,14 +60,30 @@ init _ =
 
 
 view : Model -> Browser.Document Msg
-view { generation, samples } =
+view { generation, samples, countWanted } =
     { title = "PROCJAM 2018"
     , body =
-        [ H.button [ HE.onClick RegenerationRequested ]
+        [ H.input
+            [ HA.type_ "range"
+            , HA.min "1"
+            , HA.max "30"
+            , HA.value <| String.fromInt <| clamp 1 30 <| countWanted
+            , HE.on "change" changeWantedDecoder
+            ]
+            []
+        , H.button [ HE.onClick RegenerationRequested ]
             [ H.text "REGENERATE" ]
         , H.ul [] <| List.map (H.li [] << List.singleton << viewSample) <| samples
         ]
     }
+
+
+changeWantedDecoder : Decoder Msg
+changeWantedDecoder =
+    HE.targetValue
+        |> Decode.map String.toInt
+        |> Decode.map (Maybe.map CountWantedChanged)
+        |> Decode.map (Maybe.withDefault NoOp)
 
 
 viewSample : Sample -> Html msg
@@ -74,20 +93,37 @@ viewSample { skinTone } =
 
 
 type Msg
-    = RegenerationRequested
+    = NoOp
+    | CountWantedChanged Int
+    | RegenerationRequested
     | Generated { generation : Int, samples : List Sample }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        NoOp ->
+            ( model, Cmd.none )
+
+        CountWantedChanged newCountWanted ->
+            let
+                newRequestedGeneration =
+                    model.requestedGeneration + 1
+            in
+            ( { model
+                | requestedGeneration = newRequestedGeneration
+                , countWanted = newCountWanted
+              }
+            , generateSamples { generation = newRequestedGeneration, count = newCountWanted }
+            )
+
         RegenerationRequested ->
             let
                 newRequestedGeneration =
                     model.requestedGeneration + 1
             in
             ( { model | requestedGeneration = newRequestedGeneration }
-            , generateSamples { generation = newRequestedGeneration, count = 10 }
+            , generateSamples { generation = newRequestedGeneration, count = model.countWanted }
             )
 
         Generated { generation, samples } ->
