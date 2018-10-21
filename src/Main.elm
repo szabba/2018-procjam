@@ -42,6 +42,7 @@ type alias Sample =
 
 type Item
     = Flower
+    | Rotated Float Item
 
 
 type SkinTone
@@ -168,6 +169,14 @@ viewItem item =
         Flower ->
             flower
 
+        Rotated arcFraction nested ->
+            let
+                angle =
+                    arcFraction * 360 |> round |> String.fromInt
+            in
+            S.g [ SA.transform <| "rotate(" ++ angle ++ ")" ]
+                [ viewItem nested ]
+
 
 flower : Svg msg
 flower =
@@ -252,8 +261,18 @@ sampleGenerator : Generator Sample
 sampleGenerator =
     Random.map3 Sample
         skinToneGenerator
-        itemGenerator
-        itemGenerator
+        rotatedItemGenerator
+        rotatedItemGenerator
+
+
+rotatedItemGenerator : Generator (Maybe Item)
+rotatedItemGenerator =
+    let
+        rotated angle maybeItem =
+            maybeItem
+                |> Maybe.map (Rotated angle)
+    in
+    Random.map2 rotated angleGenerator itemGenerator
 
 
 itemGenerator : Generator (Maybe Item)
@@ -261,6 +280,16 @@ itemGenerator =
     [ Flower ]
         |> List.map Just
         |> Random.uniform Nothing
+
+
+angleGenerator : Generator Float
+angleGenerator =
+    Random.weighted ( 0.6, 0 )
+        [ ( 0.1, 0.25 )
+        , ( 0.1, -0.25 )
+        , ( 0.1, -0.5 )
+        , ( 0.1, 0.5 )
+        ]
 
 
 skinToneGenerator : Generator SkinTone
