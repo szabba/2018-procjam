@@ -104,10 +104,16 @@ viewSample sample =
         , HA.style "border-width" "1px"
         , HA.style "border-style" "solid"
         ]
-        [ viewFarHand sample
-        , offset ( 75, 100 ) [ viewBody sample ]
-        , offset ( 75, 50 ) [ viewHead sample ]
-        , viewCloseHand sample
+        [ S.g
+            [ SA.fill <| skinToneToString sample.skinTone
+            , SA.strokeWidth "2"
+            , SA.stroke "#000"
+            ]
+            [ viewFarHand sample
+            , offset ( 75, 100 ) [ viewBody sample ]
+            , offset ( 75, 50 ) [ viewHead ]
+            , viewCloseHand sample
+            ]
         ]
 
 
@@ -119,21 +125,14 @@ offset ( dx, dy ) children =
     S.g [ SA.transform transform ] children
 
 
-viewHead : Sample -> Svg msg
-viewHead { skinTone } =
-    styled S.circle
-        skinTone
-        [ SA.cx "0"
-        , SA.cy "0"
-        , SA.r "30"
-        ]
-        []
+viewHead : Svg msg
+viewHead =
+    S.circle [ SA.cx "0", SA.cy "0", SA.r "30" ] []
 
 
 viewBody : Sample -> Svg msg
 viewBody { skinTone } =
-    styled S.path
-        skinTone
+    S.path
         [ SA.d "M -20 50 L -10 -10 L 30 -10 L 40 50 L 40 90 L 20 50 L 0 50 L -20 90 Z" ]
         []
 
@@ -142,30 +141,35 @@ viewCloseHand : Sample -> Svg msg
 viewCloseHand sample =
     offset ( 120, 140 )
         [ sample.closeHandItem
-            |> Maybe.map (viewItem sample.skinTone)
+            |> Maybe.map viewItem
             |> Maybe.withDefault (S.text "")
-        , viewHand sample
+        , viewHand
         ]
 
 
 viewFarHand : Sample -> Svg msg
 viewFarHand sample =
     offset ( 40, 140 )
-        [ viewHand sample
+        [ viewHand
         , sample.farHandItem
-            |> Maybe.map (viewItem sample.skinTone)
+            |> Maybe.map viewItem
             |> Maybe.withDefault (S.text "")
         ]
 
 
-viewItem : SkinTone -> Item -> Svg msg
-viewItem skinTone item =
+viewHand : Svg msg
+viewHand =
+    S.circle [ SA.r "10" ] []
+
+
+viewItem : Item -> Svg msg
+viewItem item =
     case item of
         Flower ->
-            styled S.g skinTone [] flower
+            flower
 
 
-flower : List (Svg msg)
+flower : Svg msg
 flower =
     let
         flowerHead =
@@ -176,30 +180,10 @@ flower =
             , S.circle [ SA.r "5" ] []
             ]
     in
-    [ S.line [ SA.x1 "10", SA.y1 "-15", SA.x2 "-20", SA.y2 "30" ] []
-    , offset ( -20, 30 ) flowerHead
-    ]
-
-
-viewHand : Sample -> Svg msg
-viewHand { skinTone } =
-    styled S.circle
-        skinTone
-        [ SA.r "10" ]
-        []
-
-
-styled : (List (H.Attribute msg) -> List (Svg msg) -> Svg msg) -> SkinTone -> List (H.Attribute msg) -> List (Svg msg) -> Svg msg
-styled tag (SkinTone skinTone) attrs children =
-    let
-        allAttrs =
-            [ SA.fill skinTone
-            , SA.strokeWidth "2"
-            , SA.stroke "#000"
-            ]
-                ++ attrs
-    in
-    tag allAttrs children
+    S.g []
+        [ S.line [ SA.x1 "10", SA.y1 "-15", SA.x2 "-20", SA.y2 "30" ] []
+        , offset ( -20, 30 ) flowerHead
+        ]
 
 
 type Msg
