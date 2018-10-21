@@ -98,8 +98,10 @@ viewSample sample =
         , HA.style "border-width" "1px"
         , HA.style "border-style" "solid"
         ]
-        [ offset ( 75, 100 ) [ viewBody sample ]
+        [ viewFarHand sample
+        , offset ( 75, 100 ) [ viewBody sample ]
         , offset ( 75, 50 ) [ viewHead sample ]
+        , viewCloseHand sample
         ]
 
 
@@ -113,26 +115,52 @@ offset ( dx, dy ) children =
 
 viewHead : Sample -> Svg msg
 viewHead { skinTone } =
-    S.circle
+    styled S.circle
+        skinTone
         [ SA.cx "0"
         , SA.cy "0"
         , SA.r "30"
-        , SA.fill (skinToneToString skinTone)
-        , SA.strokeWidth "2"
-        , SA.stroke "#000"
         ]
         []
 
 
 viewBody : Sample -> Svg msg
 viewBody { skinTone } =
-    S.path
-        [ SA.d "M -20 50 L -10 -10 L 30 -10 L 40 50 L 40 90 L 20 50 L 0 50 L -20 90 Z"
-        , SA.fill (skinToneToString skinTone)
-        , SA.strokeWidth "2"
-        , SA.stroke "#000"
-        ]
+    styled S.path
+        skinTone
+        [ SA.d "M -20 50 L -10 -10 L 30 -10 L 40 50 L 40 90 L 20 50 L 0 50 L -20 90 Z" ]
         []
+
+
+viewCloseHand : Sample -> Svg msg
+viewCloseHand =
+    viewHand >> List.singleton >> offset ( 120, 140 )
+
+
+viewFarHand : Sample -> Svg msg
+viewFarHand =
+    viewHand >> List.singleton >> offset ( 40, 140 )
+
+
+viewHand : Sample -> Svg msg
+viewHand { skinTone } =
+    styled S.circle
+        skinTone
+        [ SA.r "10" ]
+        []
+
+
+styled : (List (H.Attribute msg) -> List (Svg msg) -> Svg msg) -> SkinTone -> List (H.Attribute msg) -> List (Svg msg) -> Svg msg
+styled tag (SkinTone skinTone) attrs children =
+    let
+        allAttrs =
+            [ SA.fill skinTone
+            , SA.strokeWidth "2"
+            , SA.stroke "#000"
+            ]
+                ++ attrs
+    in
+    tag allAttrs children
 
 
 type Msg
@@ -199,7 +227,8 @@ generateSamples { generation, count } =
 
 sampleGenerator : Generator Sample
 sampleGenerator =
-    Random.map Sample skinToneGenerator
+    Random.map Sample
+        skinToneGenerator
 
 
 skinToneGenerator : Generator SkinTone
