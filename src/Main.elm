@@ -35,15 +35,20 @@ type alias Model =
 
 type alias Sample =
     { skinTone : SkinTone
-    , farHandItem : Maybe Item
-    , closeHandItem : Maybe Item
+    , farHandItem : Maybe RotatedItem
+    , closeHandItem : Maybe RotatedItem
+    }
+
+
+type alias RotatedItem =
+    { item : Item
+    , arcFraction : Float
     }
 
 
 type Item
     = Flower
     | Dagger
-    | Rotated Float Item
 
 
 type SkinTone
@@ -143,7 +148,7 @@ viewCloseHand : Sample -> Svg msg
 viewCloseHand sample =
     offset ( 120, 140 )
         [ sample.closeHandItem
-            |> Maybe.map viewItem
+            |> Maybe.map viewRotatedItem
             |> Maybe.withDefault (S.text "")
         , viewHand
         ]
@@ -154,7 +159,7 @@ viewFarHand sample =
     offset ( 40, 140 )
         [ viewHand
         , sample.farHandItem
-            |> Maybe.map viewItem
+            |> Maybe.map viewRotatedItem
             |> Maybe.withDefault (S.text "")
         ]
 
@@ -162,6 +167,16 @@ viewFarHand sample =
 viewHand : Svg msg
 viewHand =
     S.circle [ SA.r "10" ] []
+
+
+viewRotatedItem : RotatedItem -> Svg msg
+viewRotatedItem { item, arcFraction } =
+    let
+        angle =
+            arcFraction * 360 |> round |> String.fromInt
+    in
+    S.g [ SA.transform <| "rotate(" ++ angle ++ ")" ]
+        [ viewItem item ]
 
 
 viewItem : Item -> Svg msg
@@ -172,14 +187,6 @@ viewItem item =
 
         Dagger ->
             dagger
-
-        Rotated arcFraction nested ->
-            let
-                angle =
-                    arcFraction * 360 |> round |> String.fromInt
-            in
-            S.g [ SA.transform <| "rotate(" ++ angle ++ ")" ]
-                [ viewItem nested ]
 
 
 dagger : Svg msg
@@ -274,35 +281,23 @@ sampleGenerator : Generator Sample
 sampleGenerator =
     Random.map3 Sample
         skinToneGenerator
-        rotatedItemGenerator
-        rotatedItemGenerator
+        itemGenerator
+        itemGenerator
 
 
-rotatedItemGenerator : Generator (Maybe Item)
-rotatedItemGenerator =
-    let
-        rotated angle maybeItem =
-            maybeItem
-                |> Maybe.map (Rotated angle)
-    in
-    Random.map2 rotated angleGenerator itemGenerator
-
-
-itemGenerator : Generator (Maybe Item)
+itemGenerator : Generator (Maybe RotatedItem)
 itemGenerator =
-    [ Flower, Dagger ]
+    let
+        spreadItemAcrossAngles ( item, angles ) =
+            angles
+                |> List.map (RotatedItem item)
+    in
+    [ ( Flower, [ 0, 0.25, 0.5, 0.75 ] )
+    , ( Dagger, [ 0, 0.25, 0.5, 0.75 ] )
+    ]
+        |> List.concatMap spreadItemAcrossAngles
         |> List.map Just
         |> Random.uniform Nothing
-
-
-angleGenerator : Generator Float
-angleGenerator =
-    Random.weighted ( 0.6, 0 )
-        [ ( 0.1, 0.25 )
-        , ( 0.1, -0.25 )
-        , ( 0.1, -0.5 )
-        , ( 0.1, 0.5 )
-        ]
 
 
 skinToneGenerator : Generator SkinTone
