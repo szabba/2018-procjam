@@ -35,6 +35,7 @@ type alias Model =
 
 type alias Sample =
     { skinTone : SkinTone
+    , eyes : Eyes
     , farHandItem : Maybe RotatedItem
     , closeHandItem : Maybe RotatedItem
     }
@@ -44,6 +45,10 @@ type alias RotatedItem =
     { item : Item
     , arcFraction : Float
     }
+
+
+type Eyes
+    = EyePair
 
 
 type Item
@@ -119,7 +124,10 @@ viewSample sample =
             ]
             [ viewFarHand sample
             , offset ( 75, 100 ) [ viewBody sample ]
-            , offset ( 75, 50 ) [ viewHead ]
+            , offset ( 75, 50 )
+                [ viewHead
+                , viewEyes sample.eyes
+                ]
             , viewCloseHand sample
             ]
         ]
@@ -136,6 +144,14 @@ offset ( dx, dy ) children =
 viewHead : Svg msg
 viewHead =
     S.circle [ SA.cx "0", SA.cy "0", SA.r "30" ] []
+
+
+viewEyes : Eyes -> Svg msg
+viewEyes EyePair =
+    S.g []
+        [ S.ellipse [ SA.cx "-20", SA.cy "0", SA.rx "5", SA.ry "7" ] []
+        , S.circle [ SA.cx "5", SA.cy "0", SA.r "8" ] []
+        ]
 
 
 viewBody : Sample -> Svg msg
@@ -289,8 +305,9 @@ generateSamples { generation, count } =
 
 sampleGenerator : Generator Sample
 sampleGenerator =
-    Random.map3 Sample
+    Random.map4 Sample
         skinToneGenerator
+        (Random.constant EyePair)
         itemGenerator
         itemGenerator
 
