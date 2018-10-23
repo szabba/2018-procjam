@@ -49,6 +49,7 @@ type alias RotatedItem =
 type Item
     = Flower
     | Dagger
+    | Cane
 
 
 type SkinTone
@@ -188,6 +189,15 @@ viewItem item =
         Dagger ->
             dagger
 
+        Cane ->
+            cane
+
+
+cane : Svg msg
+cane =
+    S.g [ SA.fillOpacity "0", SA.strokeWidth "4" ]
+        [ S.path [ SA.d "M 10 10 a 10 10 0 0 0 -20 0 l 0 40" ] [] ]
+
 
 dagger : Svg msg
 dagger =
@@ -294,6 +304,7 @@ itemGenerator =
     in
     [ ( Flower, [ 0, 0.25, 0.5, 0.75 ] )
     , ( Dagger, [ 0, 0.25, 0.5, 0.75 ] )
+    , ( Cane, [ 0, 0.3 ] )
     ]
         |> List.concatMap spreadItemAcrossAngles
         |> List.map Just
