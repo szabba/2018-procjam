@@ -49,6 +49,8 @@ type alias RotatedItem =
 
 type Eyes
     = EyePair
+    | FarEye
+    | CloseEye
 
 
 type Item
@@ -147,11 +149,29 @@ viewHead =
 
 
 viewEyes : Eyes -> Svg msg
-viewEyes EyePair =
+viewEyes eyes =
     S.g []
-        [ S.ellipse [ SA.cx "-20", SA.cy "0", SA.rx "5", SA.ry "7" ] []
-        , S.circle [ SA.cx "5", SA.cy "0", SA.r "8" ] []
+        [ if [ FarEye, EyePair ] |> List.member eyes then
+            farEye
+
+          else
+            S.text ""
+        , if [ CloseEye, EyePair ] |> List.member eyes then
+            closeEye
+
+          else
+            S.text ""
         ]
+
+
+farEye : Svg msg
+farEye =
+    S.ellipse [ SA.cx "-20", SA.cy "0", SA.rx "5", SA.ry "7" ] []
+
+
+closeEye : Svg msg
+closeEye =
+    S.circle [ SA.cx "5", SA.cy "0", SA.r "8" ] []
 
 
 viewBody : Sample -> Svg msg
@@ -307,9 +327,14 @@ sampleGenerator : Generator Sample
 sampleGenerator =
     Random.map4 Sample
         skinToneGenerator
-        (Random.constant EyePair)
+        eyesGenerator
         itemGenerator
         itemGenerator
+
+
+eyesGenerator : Generator Eyes
+eyesGenerator =
+    Random.weighted ( 1, EyePair ) [ ( 0.1, FarEye ), ( 0.1, CloseEye ) ]
 
 
 itemGenerator : Generator (Maybe RotatedItem)
