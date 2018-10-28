@@ -36,9 +36,15 @@ type alias Model =
 type alias Sample =
     { skinTone : SkinTone
     , eyes : Eyes
+    , hat : Maybe Hat
     , farHandItem : Maybe RotatedItem
     , closeHandItem : Maybe RotatedItem
     }
+
+
+type Hat
+    = Bowler
+    | Top
 
 
 type alias RotatedItem =
@@ -112,9 +118,9 @@ changeWantedDecoder =
 viewSample : Sample -> Html msg
 viewSample sample =
     S.svg
-        [ SA.width "150"
-        , SA.height "200"
-        , SA.viewBox "0 0 150 200"
+        [ SA.width "200"
+        , SA.height "230"
+        , SA.viewBox "-25 -30 200 230"
         , HA.style "border-color" "#000"
         , HA.style "border-width" "1px"
         , HA.style "border-style" "solid"
@@ -130,6 +136,11 @@ viewSample sample =
                 [ viewHead
                 , viewEyes sample.eyes
                 ]
+            , sample.hat
+                |> Maybe.map viewHat
+                |> Maybe.map List.singleton
+                |> Maybe.map (offset ( 75, 25 ))
+                |> Maybe.withDefault (S.text "")
             , viewCloseHand sample
             ]
         ]
@@ -162,6 +173,58 @@ viewEyes eyes =
           else
             S.text ""
         ]
+
+
+viewHat : Hat -> Svg msg
+viewHat hat =
+    case hat of
+        Bowler ->
+            S.g []
+                [ S.path
+                    [ SA.d "M -20 -10 a 20 20 0 0 1 40 0" ]
+                    []
+                , S.rect
+                    [ SA.x "-20"
+                    , SA.y "-10"
+                    , SA.height "10"
+                    , SA.width "40"
+                    ]
+                    []
+                , S.line
+                    [ SA.strokeWidth "4"
+                    , SA.x1 "-25"
+                    , SA.y1 "0"
+                    , SA.x2 "25"
+                    , SA.y2 "0"
+                    ]
+                    []
+                ]
+
+        Top ->
+            S.g []
+                [ S.rect
+                    [ SA.x "-20"
+                    , SA.y "-50"
+                    , SA.height "40"
+                    , SA.width "40"
+                    ]
+                    []
+                , S.rect
+                    [ SA.x "-20"
+                    , SA.y "-10"
+                    , SA.height "10"
+                    , SA.width "40"
+                    ]
+                    []
+                , S.line
+                    [ SA.strokeWidth "4"
+                    , SA.x1 "-25"
+                    , SA.y1 "0"
+                    , SA.x2 "25"
+                    , SA.y2 "0"
+                    ]
+                    []
+                ]
 
 
 farEye : Svg msg
@@ -325,9 +388,10 @@ generateSamples { generation, count } =
 
 sampleGenerator : Generator Sample
 sampleGenerator =
-    Random.map4 Sample
+    Random.map5 Sample
         skinToneGenerator
         eyesGenerator
+        hatGenerator
         itemGenerator
         itemGenerator
 
@@ -335,6 +399,13 @@ sampleGenerator =
 eyesGenerator : Generator Eyes
 eyesGenerator =
     Random.weighted ( 1, EyePair ) [ ( 0.1, FarEye ), ( 0.1, CloseEye ) ]
+
+
+hatGenerator : Generator (Maybe Hat)
+hatGenerator =
+    [ Bowler, Top ]
+        |> List.map Just
+        |> Random.uniform Nothing
 
 
 itemGenerator : Generator (Maybe RotatedItem)
